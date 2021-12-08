@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.8)
+project(opencvProj)
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(OpenCV REQUIRED)
+find_package(Threads REQUIRED)
+add_executable(mainRun source.cpp)
+target_link_libraries(mainRun ${OpenCV_LIBS} Threads::Threads)
