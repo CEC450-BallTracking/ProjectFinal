@@ -209,7 +209,7 @@ void *DrawEnclosingCircle(void *data)
                 // Initialize variable for contour area
                 double largest_area = 0;
                 double area = 0;
-                int contour_index = 0;
+                vector<point> *contour_index;
                 int contrail_index = 0;
                 Point2f center;
                 float r;	
@@ -218,20 +218,20 @@ void *DrawEnclosingCircle(void *data)
                 if (detected_contours.size() > 0) 
                 {
                     // Find the largest detected contour
-                    for (int i = 0;i<detected_contours.size();i++)
+                    for (auto iter = detected_contours.begin(), end = detected_contours.end(); iter != end; ++iter)
                     {
                         // Calculate area one contour at a time
-                        area = contourArea(detected_contours[i], false);
+                        area = contourArea(*iter, false);
                         // Determine if the detected contour is larger than the previous
                         if (area > largest_area) 
                         {
                             largest_area = area;
-                            contour_index = i;
+                            contour_index = iter;
                         }		
                     }      
                     
                     // Calculate a bouding circle for the detected contour
-                    const vector<Point> cnt = detected_contours[contour_index];
+                    const vector<Point> cnt = *contour_index;
                     if (cnt.size() > 0)
                     {
                         minEnclosingCircle(cnt, center, r);
@@ -272,7 +272,7 @@ void *DrawTrackedPoints(void *data)
                 if (contrails.size() > 0)
                 {
                     
-                    for (vector<Point>::iterator iter = contrails.begin() + 1; iter != contrails.end(); ++iter)
+                    for (auto iter = contrails.begin() + 1, end = contrails.end(); iter != end; ++iter)
                     {
                         line(myImage, *(iter - 1), *iter, Scalar(0, 255, 0), 2, LINE_8);
                         ++i;
