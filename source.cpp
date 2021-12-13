@@ -103,6 +103,17 @@ struct sched_attr SetupThread(void *data)
     return attr;
 }
 
+//returns average in nanoseconds
+long long CalcRollingAverage(long long average, long newData, int dataCount)
+{
+    return ((average * dataCount) + (long long)newData) / (long long)dataCount;
+}
+void DisplayRuntimeData(char* threadName, long long average, long WCET)
+{
+    cout << threadName << " : Average Execution Time = " << average << " : WCET = " << WCET << "\n";
+}
+
+#define MY_CLOCK_RES CLOCK_THREAD_CPUTIME_ID
 void *GetFrame(void *data)
 {
     struct sched_attr attr = SetupThread(data);
@@ -115,10 +126,19 @@ void *GetFrame(void *data)
 	Mat myImage_results; // Declaring matrix to draw final results on
 	Mat element;
 
+    //Timing Code
+    int timesRan = 0;
+    long long average = 0;
+    struct timespec startTime = {0,0};
+    struct timespec endTime = {0,0};
+    long elapsedTime = 0;
+    long WCET = 0;
+
     while (!done)
     {
-
-        //cout << "Get Frame Loop" << endl;
+        //Timing code
+        clock_gettime(MY_CLOCK_RES, startTime);
+        
         // Create a structuring element (SE)
         int morph_size = 2;
         
@@ -155,35 +175,74 @@ void *GetFrame(void *data)
         
         prep_image = myImage_dilated;
 
+        //Timing code
+        clock_gettime(MY_CLOCK_RES, endTime);
+        elapsedTime = endTime.tv_nsec - startTime.tv_nsec;
+        if (elapsedTime > WCET)
+            WCET = elapsedTime;
+        average = CalcRollingAverage(average, elapsedTime, timesRan);
+
         sched_yield();
     }
+    //Timing code
+    DisplayRuntimeData("GetFrame", average, WCET);
     return NULL;
 }
 
 void *FindContours(void *data)
 {
     struct sched_attr attr = SetupThread(data);
+
+    //Timing code
+    int timesRan = 0;
+    long long average = 0;
+    struct timespec startTime = {0,0};
+    struct timespec endTime = {0,0};
+    long elapsedTime = 0;
+    long WCET = 0;
+
     while (!done)
     {
-        //cout << "Find Contours Loop" << endl;
+        //Timing code
+        clock_gettime(MY_CLOCK_RES, startTime);
+
         if (!prep_image.empty())
-        //f (prep_image.size().height <= 0) // alternative null check
         {
             vector<Vec4i> hierarchy;
             findContours(prep_image, detected_contours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
         }
+
+        //Timing code
+        clock_gettime(MY_CLOCK_RES, endTime);
+        elapsedTime = endTime.tv_nsec - startTime.tv_nsec;
+        if (elapsedTime > WCET)
+            WCET = elapsedTime;
+        average = CalcRollingAverage(average, elapsedTime, timesRan);
+
         sched_yield();
-        
     }
+    //Timing code
+    DisplayRuntimeData("FindContours", average, WCET);
     return NULL;
 }
 
 void *DrawEnclosingCircle(void *data)
 {
     struct sched_attr attr = SetupThread(data);
+
+    //Timing code
+    int timesRan = 0;
+    long long average = 0;
+    struct timespec startTime = {0,0};
+    struct timespec endTime = {0,0};
+    long elapsedTime = 0;
+    long WCET = 0;
+
     while (!done)
     {
-        //cout << "Draw Circle Loop" << endl;
+        //Timing code
+        clock_gettime(MY_CLOCK_RES, startTime);
+        
         // Initialize variable for contour area
         double largest_area = 0;
         double area = 0;
@@ -226,18 +285,38 @@ void *DrawEnclosingCircle(void *data)
             }
         }
 
+        //Timing code
+        clock_gettime(MY_CLOCK_RES, endTime);
+        elapsedTime = endTime.tv_nsec - startTime.tv_nsec;
+        if (elapsedTime > WCET)
+            WCET = elapsedTime;
+        average = CalcRollingAverage(average, elapsedTime, timesRan);
+
         sched_yield();
         
     }
+    //Timing code
+    DisplayRuntimeData("DrawEnclosingCircle", average, WCET);
     return NULL;
 }
 
 void *DrawTrackedPoints(void *data)
 {
     struct sched_attr attr = SetupThread(data);
+
+    //Timing code
+    int timesRan = 0;
+    long long average = 0;
+    struct timespec startTime = {0,0};
+    struct timespec endTime = {0,0};
+    long elapsedTime = 0;
+    long WCET = 0;
+
     while (!done)
     {
-        //cout << "Draw Contrails Loop" << endl;
+        //Timing code
+        clock_gettime(MY_CLOCK_RES, startTime);
+        
         int i = 0;
         if (contrails.size() > 0)
         {
@@ -249,8 +328,17 @@ void *DrawTrackedPoints(void *data)
             }
         }
         
+        //Timing code
+        clock_gettime(MY_CLOCK_RES, endTime);
+        elapsedTime = endTime.tv_nsec - startTime.tv_nsec;
+        if (elapsedTime > WCET)
+            WCET = elapsedTime;
+        average = CalcRollingAverage(average, elapsedTime, timesRan);
+
         sched_yield();
     }
+    //Timing code
+    DisplayRuntimeData("DrawTrackedPoints", average, WCET);
     return NULL;
 }
 
@@ -259,9 +347,19 @@ void *DisplayFrame(void *data)
     struct sched_attr attr = SetupThread(data);
     namedWindow("Video Player"); //Declaring the video to show the video//
     
+    //Timing code
+    int timesRan = 0;
+    long long average = 0;
+    struct timespec startTime = {0,0};
+    struct timespec endTime = {0,0};
+    long elapsedTime = 0;
+    long WCET = 0;
+
     while (!done)
     {
-        //cout << "Display Frame Loop" << endl;
+        //Timing code
+        clock_gettime(MY_CLOCK_RES, startTime);
+        
         ++frames;
         endFrameTimer = chrono::steady_clock::now();
         chrono::duration<double> elapsed_seconds = endFrameTimer - beginFrameTimer;
@@ -278,16 +376,25 @@ void *DisplayFrame(void *data)
             putText(myImage, to_string(fps), cvPoint(30,30), 0, 0.8, cvScalar(200,200,250),1 , LINE_AA);
             imshow("Video Player", myImage); // Draw frame
             	// Display results
-      //imshow("Video Player", myImage); //Showing the video//
-      char c = (char)waitKey(25); //Allowing 25 milliseconds frame processing time and initiating break condition//
-      if (c == 27){ //If 'Esc' is entered break the loop//
-         break;
-      }
+            //imshow("Video Player", myImage); //Showing the video//
+            char c = (char)waitKey(25); //Allowing 25 milliseconds frame processing time and initiating break condition//
+            if (c == 27){ //If 'Esc' is entered break the loop//
+                break;
+            }
         }
         
+        //Timing code
+        clock_gettime(MY_CLOCK_RES, endTime);
+        elapsedTime = endTime.tv_nsec - startTime.tv_nsec;
+        if (elapsedTime > WCET)
+            WCET = elapsedTime;
+        average = CalcRollingAverage(average, elapsedTime, timesRan);
+
         sched_yield();
-        }
+    }
     destroyAllWindows();
+    //Timing code
+    DisplayRuntimeData("DisplayFrame", average, WCET);
     return NULL;
 }
 
