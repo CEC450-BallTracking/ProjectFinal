@@ -118,7 +118,7 @@ void *GetFrame(void *data)
     while (!done)
     {
 
-        cout << "Get Frame Loop" << endl;
+        //cout << "Get Frame Loop" << endl;
         // Create a structuring element (SE)
         int morph_size = 2;
         
@@ -165,7 +165,7 @@ void *FindContours(void *data)
     struct sched_attr attr = SetupThread(data);
     while (!done)
     {
-        cout << "Find Contours Loop" << endl;
+        //cout << "Find Contours Loop" << endl;
         if (!prep_image.empty())
         //f (prep_image.size().height <= 0) // alternative null check
         {
@@ -183,7 +183,7 @@ void *DrawEnclosingCircle(void *data)
     struct sched_attr attr = SetupThread(data);
     while (!done)
     {
-        cout << "Draw Circle Loop" << endl;
+        //cout << "Draw Circle Loop" << endl;
         // Initialize variable for contour area
         double largest_area = 0;
         double area = 0;
@@ -237,7 +237,7 @@ void *DrawTrackedPoints(void *data)
     struct sched_attr attr = SetupThread(data);
     while (!done)
     {
-        cout << "Draw Contrails Loop" << endl;
+        //cout << "Draw Contrails Loop" << endl;
         int i = 0;
         if (contrails.size() > 0)
         {
@@ -257,11 +257,11 @@ void *DrawTrackedPoints(void *data)
 void *DisplayFrame(void *data)
 {
     struct sched_attr attr = SetupThread(data);
-    //namedWindow("Video Player"); //Declaring the video to show the video//
+    namedWindow("Video Player"); //Declaring the video to show the video//
     
     while (!done)
     {
-        cout << "Display Frame Loop" << endl;
+        //cout << "Display Frame Loop" << endl;
         ++frames;
         endFrameTimer = chrono::steady_clock::now();
         chrono::duration<double> elapsed_seconds = endFrameTimer - beginFrameTimer;
@@ -277,11 +277,17 @@ void *DisplayFrame(void *data)
         {
             putText(myImage, to_string(fps), cvPoint(30,30), 0, 0.8, cvScalar(200,200,250),1 , LINE_AA);
             imshow("Video Player", myImage); // Draw frame
+            	// Display results
+      //imshow("Video Player", myImage); //Showing the video//
+      char c = (char)waitKey(25); //Allowing 25 milliseconds frame processing time and initiating break condition//
+      if (c == 27){ //If 'Esc' is entered break the loop//
+         break;
+      }
         }
         
         sched_yield();
         }
-    
+    destroyAllWindows();
     return NULL;
 }
 
@@ -296,9 +302,10 @@ int main (int argc, char **argv)
         {0, SCHED_DEADLINE, 0, 0, 0, 10, 66, 83},
         {0, SCHED_DEADLINE, 0, 0, 0, 10, 77, 83},
         {0, SCHED_DEADLINE, 0, 0, 0, 5, 83, 83}    
-    };
+    }; 
 
-    namedWindow("Video Player"); //Declaring the video to show the video//
+
+    // namedWindow("Video Player"); //Declaring the video to show the video//
     //cap>>myImage;
     //imshow("Video Player", myImage);
     beginFrameTimer = chrono::steady_clock::now();
@@ -311,7 +318,10 @@ int main (int argc, char **argv)
 
     sleep(30);
     done = 1;
+    
     for (int i = 0; i < NUM_THREADS; ++i) 
         pthread_join(thread[i], NULL);
+    cap.release();
+    //destroyAllWindows();
     return 0;
 }
