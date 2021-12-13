@@ -177,6 +177,7 @@ void *GetFrame(void *data)
 
         //Timing code
         clock_gettime(MY_CLOCK_RES, endTime);
+        ++timesRan;
         elapsedTime = endTime.tv_nsec - startTime.tv_nsec;
         if (elapsedTime > WCET)
             WCET = elapsedTime;
@@ -214,6 +215,7 @@ void *FindContours(void *data)
 
         //Timing code
         clock_gettime(MY_CLOCK_RES, endTime);
+        ++timesRan;
         elapsedTime = endTime.tv_nsec - startTime.tv_nsec;
         if (elapsedTime > WCET)
             WCET = elapsedTime;
@@ -287,6 +289,7 @@ void *DrawEnclosingCircle(void *data)
 
         //Timing code
         clock_gettime(MY_CLOCK_RES, endTime);
+        ++timesRan;
         elapsedTime = endTime.tv_nsec - startTime.tv_nsec;
         if (elapsedTime > WCET)
             WCET = elapsedTime;
@@ -330,6 +333,7 @@ void *DrawTrackedPoints(void *data)
         
         //Timing code
         clock_gettime(MY_CLOCK_RES, endTime);
+        ++timesRan;
         elapsedTime = endTime.tv_nsec - startTime.tv_nsec;
         if (elapsedTime > WCET)
             WCET = elapsedTime;
@@ -385,6 +389,7 @@ void *DisplayFrame(void *data)
         
         //Timing code
         clock_gettime(MY_CLOCK_RES, endTime);
+        ++timesRan;
         elapsedTime = endTime.tv_nsec - startTime.tv_nsec;
         if (elapsedTime > WCET)
             WCET = elapsedTime;
