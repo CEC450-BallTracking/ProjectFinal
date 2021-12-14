@@ -106,11 +106,11 @@ struct sched_attr SetupThread(void *data)
 //returns average in nanoseconds
 long long CalcRollingAverage(long long average, long newData, int dataCount)
 {
-    return ((average * (dataCount-1)) + (long long)newData) / (long long)dataCount;
+    return (average * (dataCount - 1) + (long long)newData) / (long long)dataCount;
 }
 void DisplayRuntimeData(char* threadName, long long average, long WCET)
 {
-    cout << threadName << " : Average Execution Time = " << average/(float)MILLI_TO_NANO << " : WCET = " << WCET/(float)MILLI_TO_NANO << "\n";
+    cout << threadName << " : Average Execution Time = " << average << " : WCET = " << WCET/(float)MILLI_TO_NANO << "\n";
 }
 
 #define MY_CLOCK_RES CLOCK_THREAD_CPUTIME_ID
@@ -137,7 +137,7 @@ void *GetFrame(void *data)
     while (!done)
     {
         //Timing code
-        clock_gettime(MY_CLOCK_RES, startTime);
+        clock_gettime(MY_CLOCK_RES, &startTime);
         
         // Create a structuring element (SE)
         int morph_size = 2;
@@ -176,7 +176,7 @@ void *GetFrame(void *data)
         prep_image = myImage_dilated;
 
         //Timing code
-        clock_gettime(MY_CLOCK_RES, endTime);
+        clock_gettime(MY_CLOCK_RES, &endTime);
         ++timesRan;
         elapsedTime = endTime.tv_nsec - startTime.tv_nsec;
         if (elapsedTime > WCET)
@@ -205,7 +205,7 @@ void *FindContours(void *data)
     while (!done)
     {
         //Timing code
-        clock_gettime(MY_CLOCK_RES, startTime);
+        clock_gettime(MY_CLOCK_RES, &startTime);
 
         if (!prep_image.empty())
         {
@@ -214,7 +214,7 @@ void *FindContours(void *data)
         }
 
         //Timing code
-        clock_gettime(MY_CLOCK_RES, endTime);
+        clock_gettime(MY_CLOCK_RES, &endTime);
         ++timesRan;
         elapsedTime = endTime.tv_nsec - startTime.tv_nsec;
         if (elapsedTime > WCET)
@@ -243,7 +243,7 @@ void *DrawEnclosingCircle(void *data)
     while (!done)
     {
         //Timing code
-        clock_gettime(MY_CLOCK_RES, startTime);
+        clock_gettime(MY_CLOCK_RES, &startTime);
         
         // Initialize variable for contour area
         double largest_area = 0;
@@ -288,7 +288,7 @@ void *DrawEnclosingCircle(void *data)
         }
 
         //Timing code
-        clock_gettime(MY_CLOCK_RES, endTime);
+        clock_gettime(MY_CLOCK_RES, &endTime);
         ++timesRan;
         elapsedTime = endTime.tv_nsec - startTime.tv_nsec;
         if (elapsedTime > WCET)
@@ -318,7 +318,7 @@ void *DrawTrackedPoints(void *data)
     while (!done)
     {
         //Timing code
-        clock_gettime(MY_CLOCK_RES, startTime);
+        clock_gettime(MY_CLOCK_RES, &startTime);
         
         int i = 0;
         if (contrails.size() > 0)
@@ -332,7 +332,7 @@ void *DrawTrackedPoints(void *data)
         }
         
         //Timing code
-        clock_gettime(MY_CLOCK_RES, endTime);
+        clock_gettime(MY_CLOCK_RES, &endTime);
         ++timesRan;
         elapsedTime = endTime.tv_nsec - startTime.tv_nsec;
         if (elapsedTime > WCET)
@@ -362,7 +362,7 @@ void *DisplayFrame(void *data)
     while (!done)
     {
         //Timing code
-        clock_gettime(MY_CLOCK_RES, startTime);
+        clock_gettime(MY_CLOCK_RES, &startTime);
         
         ++frames;
         endFrameTimer = chrono::steady_clock::now();
@@ -388,11 +388,11 @@ void *DisplayFrame(void *data)
         }
         
         //Timing code
-        clock_gettime(MY_CLOCK_RES, endTime);
+        clock_gettime(MY_CLOCK_RES, &endTime);
         ++timesRan;
         elapsedTime = endTime.tv_nsec - startTime.tv_nsec;
         if (elapsedTime > WCET)
-            WCET = elapsedTime;
+            WCET = elapsedTime; // Multiply by 0.000001 to convert to milliseconds
         average = CalcRollingAverage(average, elapsedTime, timesRan);
 
         sched_yield();
@@ -437,3 +437,4 @@ int main (int argc, char **argv)
     //destroyAllWindows();
     return 0;
 }
+
