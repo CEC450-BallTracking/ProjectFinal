@@ -110,7 +110,7 @@ long long CalcRollingAverage(long long average, long newData, int dataCount)
 }
 void DisplayRuntimeData(char* threadName, long long average, long WCET)
 {
-    cout << threadName << " : Average Execution Time = " << average << " : WCET = " << WCET << "\n";
+    cout << threadName << " : Average Execution Time = " << average/(float)MILLI_TO_NANO << " : WCET = " << WCET/(float)MILLI_TO_NANO << "\n";
 }
 
 #define MY_CLOCK_RES CLOCK_THREAD_CPUTIME_ID
