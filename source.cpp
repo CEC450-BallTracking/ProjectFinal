@@ -113,7 +113,8 @@ void DisplayRuntimeData(char* threadName, long long average, long WCET)
     cout << threadName << " : Average Execution Time = " << average << " : WCET = " << WCET/(float)MILLI_TO_NANO << "\n";
 }
 
-#define MY_CLOCK_RES CLOCK_THREAD_CPUTIME_ID
+#define MY_CLOCK_THREAD CLOCK_THREAD_CPUTIME_ID
+#define MY_CLOCK_GLOABL CLOCK_REALTIME
 void *GetFrame(void *data)
 {
     struct sched_attr attr = SetupThread(data);
@@ -129,15 +130,22 @@ void *GetFrame(void *data)
     //Timing Code
     int timesRan = 0;
     long long average = 0;
-    struct timespec startTime = {0,0};
-    struct timespec endTime = {0,0};
+    struct timespec startThreadTime = {0,0};
+    struct timespec endThreadTime = {0,0};
+    struct timespec startGlobalTime = {0,0};
+    struct timespec endGlobalTime = {0,0};
     long elapsedTime = 0;
     long WCET = 0;
 
     while (!done)
     {
         //Timing code
-        clock_gettime(MY_CLOCK_RES, &startTime);
+        clock_gettime(MY_CLOCK_THREAD, &startThreadTime);
+        if (timesRan < 24)
+        {
+            clock_gettime(MY_CLOCK_GLOABL, &startGlobalTime);
+            cout << "1: GetFrame started at " << startGlobalTime.tv_sec <<"s and " << startGlobalTime.tv_nsec <<"ns"<<endl;
+        }
         
         // Create a structuring element (SE)
         int morph_size = 2;
@@ -176,9 +184,14 @@ void *GetFrame(void *data)
         prep_image = myImage_dilated;
 
         //Timing code
-        clock_gettime(MY_CLOCK_RES, &endTime);
+        clock_gettime(MY_CLOCK_THREAD, &endThreadTime);
+        if (timesRan < 24)
+        {
+            clock_gettime(MY_CLOCK_GLOABL, &endGlobalTime);
+            cout << "1: GetFrame ended at " << endGlobalTime.tv_sec <<"s and " << endGlobalTime.tv_nsec <<"ns"<<endl;
+        }
         ++timesRan;
-        elapsedTime = endTime.tv_nsec - startTime.tv_nsec;
+        elapsedTime = endThreadTime.tv_nsec - startThreadTime.tv_nsec;
         if (elapsedTime > WCET)
             WCET = elapsedTime;
         average = CalcRollingAverage(average, elapsedTime, timesRan);
@@ -197,15 +210,22 @@ void *FindContours(void *data)
     //Timing code
     int timesRan = 0;
     long long average = 0;
-    struct timespec startTime = {0,0};
-    struct timespec endTime = {0,0};
+    struct timespec startThreadTime = {0,0};
+    struct timespec endThreadTime = {0,0};
+    struct timespec startGlobalTime = {0,0};
+    struct timespec endGlobalTime = {0,0};
     long elapsedTime = 0;
     long WCET = 0;
 
     while (!done)
     {
         //Timing code
-        clock_gettime(MY_CLOCK_RES, &startTime);
+        clock_gettime(MY_CLOCK_THREAD, &startThreadTime);
+        if (timesRan < 24)
+        {
+            clock_gettime(MY_CLOCK_GLOABL, &startGlobalTime);
+            cout << "2: FindContours started at " << startGlobalTime.tv_sec <<"s and " << startGlobalTime.tv_nsec <<"ns"<<endl;
+        }
 
         if (!prep_image.empty())
         {
@@ -214,9 +234,14 @@ void *FindContours(void *data)
         }
 
         //Timing code
-        clock_gettime(MY_CLOCK_RES, &endTime);
+        clock_gettime(MY_CLOCK_THREAD, &endThreadTime);
+        if (timesRan < 24)
+        {
+            clock_gettime(MY_CLOCK_GLOABL, &endGlobalTime);
+            cout << "2: FindContours ended at " << endGlobalTime.tv_sec <<"s and " << endGlobalTime.tv_nsec <<"ns"<<endl;
+        }
         ++timesRan;
-        elapsedTime = endTime.tv_nsec - startTime.tv_nsec;
+        elapsedTime = endThreadTime.tv_nsec - startThreadTime.tv_nsec;
         if (elapsedTime > WCET)
             WCET = elapsedTime;
         average = CalcRollingAverage(average, elapsedTime, timesRan);
@@ -235,15 +260,22 @@ void *DrawEnclosingCircle(void *data)
     //Timing code
     int timesRan = 0;
     long long average = 0;
-    struct timespec startTime = {0,0};
-    struct timespec endTime = {0,0};
+    struct timespec startThreadTime = {0,0};
+    struct timespec endThreadTime = {0,0};
+    struct timespec startGlobalTime = {0,0};
+    struct timespec endGlobalTime = {0,0};
     long elapsedTime = 0;
     long WCET = 0;
 
     while (!done)
     {
         //Timing code
-        clock_gettime(MY_CLOCK_RES, &startTime);
+        clock_gettime(MY_CLOCK_THREAD, &startThreadTime);
+        if (timesRan < 24)
+        {
+            clock_gettime(MY_CLOCK_GLOABL, &startGlobalTime);
+            cout << "3: DrawEnclosingCircle started at " << startGlobalTime.tv_sec <<"s and " << startGlobalTime.tv_nsec <<"ns"<<endl;
+        }
         
         // Initialize variable for contour area
         double largest_area = 0;
@@ -288,9 +320,14 @@ void *DrawEnclosingCircle(void *data)
         }
 
         //Timing code
-        clock_gettime(MY_CLOCK_RES, &endTime);
+        clock_gettime(MY_CLOCK_THREAD, &endThreadTime);
+        if (timesRan < 24)
+        {
+            clock_gettime(MY_CLOCK_GLOABL, &endGlobalTime);
+            cout << "3: DrawEnclosingCircle ended at " << endGlobalTime.tv_sec <<"s and " << endGlobalTime.tv_nsec <<"ns"<<endl;
+        }
         ++timesRan;
-        elapsedTime = endTime.tv_nsec - startTime.tv_nsec;
+        elapsedTime = endThreadTime.tv_nsec - startThreadTime.tv_nsec;
         if (elapsedTime > WCET)
             WCET = elapsedTime;
         average = CalcRollingAverage(average, elapsedTime, timesRan);
@@ -310,15 +347,22 @@ void *DrawTrackedPoints(void *data)
     //Timing code
     int timesRan = 0;
     long long average = 0;
-    struct timespec startTime = {0,0};
-    struct timespec endTime = {0,0};
+    struct timespec startThreadTime = {0,0};
+    struct timespec endThreadTime = {0,0};
+    struct timespec startGlobalTime = {0,0};
+    struct timespec endGlobalTime = {0,0};
     long elapsedTime = 0;
     long WCET = 0;
 
     while (!done)
     {
         //Timing code
-        clock_gettime(MY_CLOCK_RES, &startTime);
+        clock_gettime(MY_CLOCK_THREAD, &startThreadTime);
+        if (timesRan < 24)
+        {
+            clock_gettime(MY_CLOCK_GLOABL, &startGlobalTime);
+            cout << "4: DrawTrackedPoints started at " << startGlobalTime.tv_sec <<"s and " << startGlobalTime.tv_nsec <<"ns"<<endl;
+        }
         
         int i = 0;
         if (contrails.size() > 0)
@@ -332,9 +376,14 @@ void *DrawTrackedPoints(void *data)
         }
         
         //Timing code
-        clock_gettime(MY_CLOCK_RES, &endTime);
+        clock_gettime(MY_CLOCK_THREAD, &endThreadTime);
+        if (timesRan < 24)
+        {
+            clock_gettime(MY_CLOCK_GLOABL, &endGlobalTime);
+            cout << "4: DrawTrackedPoints ended at " << endGlobalTime.tv_sec <<"s and " << endGlobalTime.tv_nsec <<"ns"<<endl;
+        }
         ++timesRan;
-        elapsedTime = endTime.tv_nsec - startTime.tv_nsec;
+        elapsedTime = endThreadTime.tv_nsec - startThreadTime.tv_nsec;
         if (elapsedTime > WCET)
             WCET = elapsedTime;
         average = CalcRollingAverage(average, elapsedTime, timesRan);
@@ -354,15 +403,22 @@ void *DisplayFrame(void *data)
     //Timing code
     int timesRan = 0;
     long long average = 0;
-    struct timespec startTime = {0,0};
-    struct timespec endTime = {0,0};
+    struct timespec startThreadTime = {0,0};
+    struct timespec endThreadTime = {0,0};
+    struct timespec startGlobalTime = {0,0};
+    struct timespec endGlobalTime = {0,0};
     long elapsedTime = 0;
     long WCET = 0;
 
     while (!done)
     {
         //Timing code
-        clock_gettime(MY_CLOCK_RES, &startTime);
+        clock_gettime(MY_CLOCK_THREAD, &startThreadTime);
+        if (timesRan < 24)
+        {
+            clock_gettime(MY_CLOCK_GLOABL, &startGlobalTime);
+            cout << "5: DisplayFrame started at " << startGlobalTime.tv_sec <<"s and " << startGlobalTime.tv_nsec <<"ns"<<endl;
+        }
         
         ++frames;
         endFrameTimer = chrono::steady_clock::now();
@@ -388,9 +444,14 @@ void *DisplayFrame(void *data)
         }
         
         //Timing code
-        clock_gettime(MY_CLOCK_RES, &endTime);
+        clock_gettime(MY_CLOCK_THREAD, &endThreadTime);
+        if (timesRan < 24)
+        {
+            clock_gettime(MY_CLOCK_GLOABL, &endGlobalTime);
+            cout << "5: DisplayFrame ended at " << endGlobalTime.tv_sec <<"s and " << endGlobalTime.tv_nsec <<"ns"<<endl;
+        }
         ++timesRan;
-        elapsedTime = endTime.tv_nsec - startTime.tv_nsec;
+        elapsedTime = endThreadTime.tv_nsec - startThreadTime.tv_nsec;
         if (elapsedTime > WCET)
             WCET = elapsedTime; // Multiply by 0.000001 to convert to milliseconds
         average = CalcRollingAverage(average, elapsedTime, timesRan);
@@ -409,11 +470,11 @@ int main (int argc, char **argv)
     pthread_t thread[NUM_THREADS];
     struct sched_attr task_attr[5] =
     {
-        {0, SCHED_DEADLINE, 0, 0, 0, 34, 35, 83},
-        {0, SCHED_DEADLINE, 0, 0, 0, 20, 55, 83},
+        {0, SCHED_DEADLINE, 0, 0, 0, 44, 45, 83},
+        {0, SCHED_DEADLINE, 0, 0, 0, 5, 51, 83},
+        {0, SCHED_DEADLINE, 0, 0, 0, 3, 55, 83},
         {0, SCHED_DEADLINE, 0, 0, 0, 10, 66, 83},
-        {0, SCHED_DEADLINE, 0, 0, 0, 10, 77, 83},
-        {0, SCHED_DEADLINE, 0, 0, 0, 5, 83, 83}    
+        {0, SCHED_DEADLINE, 0, 0, 0, 16, 83, 83}    
     }; 
 
 
