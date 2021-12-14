@@ -52,6 +52,7 @@ int frames = 0;
 chrono::steady_clock::time_point beginFrameTimer;
 chrono::steady_clock::time_point endFrameTimer;
 
+//sched_attribute struct required by sched_deadline, but not implemented by linux
 struct sched_attr {
 	__u32 size;
 
@@ -70,19 +71,22 @@ struct sched_attr {
 	__u64 sched_period;
  };
  
+//sched_deadline set_attr system call
 int sched_setattr(pid_t pid,
 		  const struct sched_attr *attr,
 		  unsigned int flags) {
 	return syscall(__NR_sched_setattr, pid, attr, flags);
  }
-
- int sched_getattr(pid_t pid,
+//sched_deadline get_attr system call
+int sched_getattr(pid_t pid,
 		  struct sched_attr *attr,
 		  unsigned int size,
 		  unsigned int flags) {
 	return syscall(__NR_sched_getattr, pid, attr, size, flags);
  }
 
+//Called at the start of each thread to set the scheduling attributes for each thread
+//sets threads to sched_deadline and sets C, D, and P of each thread (task)
 struct sched_attr SetupThread(void *data)
 {
     struct sched_attr attr = *((struct sched_attr*)data);
@@ -108,23 +112,27 @@ long long CalcRollingAverage(long long average, long newData, int dataCount)
 {
     return (average * (dataCount - 1) + (long long)newData) / (long long)dataCount;
 }
+//When thread dies display its average and WCET execution time
 void DisplayRuntimeData(char* threadName, long long average, long WCET)
 {
     cout << threadName << " : Average Execution Time = " << average/*/(float)MILLI_TO_NANO*/ << " : WCET = " << WCET/*/(float)MILLI_TO_NANO*/ << "\n";
 }
 
 #define MY_CLOCK_RES CLOCK_THREAD_CPUTIME_ID
+//Task 1
 void *GetFrame(void *data)
 {
+    //thread setup
     struct sched_attr attr = SetupThread(data);
+    //OpenCV variables
     Mat myImage_hsv; // Declaring a matrix to load modified image into
-	Mat myImage_resized; // Declaring a matrix to load resized image into
-	Mat myImage_blurred; // Declaring a matrix to load blurred image into
-	Mat myImage_masked; // Declaring a matrix to load color-filtered image into
-	Mat myImage_eroded; // Declaring a matrix to load eroded image into
-	Mat myImage_dilated; // Declaring a matrix to load dilated image into
-	Mat myImage_results; // Declaring matrix to draw final results on
-	Mat element;
+    Mat myImage_resized; // Declaring a matrix to load resized image into
+    Mat myImage_blurred; // Declaring a matrix to load blurred image into
+    Mat myImage_masked; // Declaring a matrix to load color-filtered image into
+    Mat myImage_eroded; // Declaring a matrix to load eroded image into
+    Mat myImage_dilated; // Declaring a matrix to load dilated image into
+    Mat myImage_results; // Declaring matrix to draw final results on
+    Mat element;
 
     //Timing Code
     int timesRan = 0;
@@ -134,11 +142,12 @@ void *GetFrame(void *data)
     long elapsedTime = 0;
     long WCET = 0;
 
+    //Task loop
     while (!done)
     {
         //Timing code
         clock_gettime(MY_CLOCK_RES, &startTime);
-        
+        /////////OPENCV CODE
         // Create a structuring element (SE)
         int morph_size = 2;
         
@@ -174,7 +183,8 @@ void *GetFrame(void *data)
         dilate(myImage_eroded, myImage_dilated, element, Point(-1,-1),2);
         
         prep_image = myImage_dilated;
-
+        ////////////////// end OpenCV code
+	    
         //Timing code
         clock_gettime(MY_CLOCK_RES, &endTime);
         ++timesRan;
@@ -183,6 +193,7 @@ void *GetFrame(void *data)
             WCET = elapsedTime;
         average = CalcRollingAverage(average, elapsedTime, timesRan);
 
+        //Relenquish thread remaining cputime until next period
         sched_yield();
     }
     //Timing code
@@ -192,6 +203,7 @@ void *GetFrame(void *data)
 
 void *FindContours(void *data)
 {
+    //thread setup
     struct sched_attr attr = SetupThread(data);
 
     //Timing code
@@ -206,12 +218,14 @@ void *FindContours(void *data)
     {
         //Timing code
         clock_gettime(MY_CLOCK_RES, &startTime);
-
+	    
+        /////////OPENCV CODE
         if (!prep_image.empty())
         {
             vector<Vec4i> hierarchy;
             findContours(prep_image, detected_contours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
         }
+        //////////End OpenCV code
 
         //Timing code
         clock_gettime(MY_CLOCK_RES, &endTime);
@@ -221,6 +235,7 @@ void *FindContours(void *data)
             WCET = elapsedTime;
         average = CalcRollingAverage(average, elapsedTime, timesRan);
 
+        //Relenquish thread remaining cputime until next period
         sched_yield();
     }
     //Timing code
@@ -230,6 +245,7 @@ void *FindContours(void *data)
 
 void *DrawEnclosingCircle(void *data)
 {
+    //thread setup
     struct sched_attr attr = SetupThread(data);
 
     //Timing code
@@ -245,6 +261,7 @@ void *DrawEnclosingCircle(void *data)
         //Timing code
         clock_gettime(MY_CLOCK_RES, &startTime);
         
+        /////////OPENCV CODE
         // Initialize variable for contour area
         double largest_area = 0;
         double area = 0;
@@ -286,6 +303,7 @@ void *DrawEnclosingCircle(void *data)
                 } 
             }
         }
+        /////////end of OPENCV CODE
 
         //Timing code
         clock_gettime(MY_CLOCK_RES, &endTime);
@@ -295,6 +313,7 @@ void *DrawEnclosingCircle(void *data)
             WCET = elapsedTime;
         average = CalcRollingAverage(average, elapsedTime, timesRan);
 
+        //Relenquish thread remaining cputime until next period
         sched_yield();
         
     }
@@ -305,6 +324,7 @@ void *DrawEnclosingCircle(void *data)
 
 void *DrawTrackedPoints(void *data)
 {
+    //thread setup
     struct sched_attr attr = SetupThread(data);
 
     //Timing code
@@ -320,6 +340,7 @@ void *DrawTrackedPoints(void *data)
         //Timing code
         clock_gettime(MY_CLOCK_RES, &startTime);
         
+        /////////OPENCV CODE
         int i = 0;
         if (contrails.size() > 0)
         {
@@ -330,6 +351,7 @@ void *DrawTrackedPoints(void *data)
                 ++i;
             }
         }
+        /////////end of OPENCV CODE
         
         //Timing code
         clock_gettime(MY_CLOCK_RES, &endTime);
@@ -339,6 +361,7 @@ void *DrawTrackedPoints(void *data)
             WCET = elapsedTime;
         average = CalcRollingAverage(average, elapsedTime, timesRan);
 
+        //Relenquish thread remaining cputime until next period
         sched_yield();
     }
     //Timing code
@@ -395,6 +418,7 @@ void *DisplayFrame(void *data)
             WCET = elapsedTime; // Multiply by 0.000001 to convert to milliseconds
         average = CalcRollingAverage(average, elapsedTime, timesRan);
 
+        //Relenquish thread remaining cputime until next period
         sched_yield();
     }
     destroyAllWindows();
@@ -405,8 +429,10 @@ void *DisplayFrame(void *data)
 
 int main (int argc, char **argv)
 {
+    //set opencv to run sequientially (no threading)
     setNumThreads(0);
     pthread_t thread[NUM_THREADS];
+    //sched_deadline attributes for each task
     struct sched_attr task_attr[5] =
     {
         {0, SCHED_DEADLINE, 0, 0, 0, 44, 45, 83},
@@ -416,24 +442,22 @@ int main (int argc, char **argv)
         {0, SCHED_DEADLINE, 0, 0, 0, 15, 82, 83}    
     }; 
 
-
-    // namedWindow("Video Player"); //Declaring the video to show the video//
-    //cap>>myImage;
-    //imshow("Video Player", myImage);
+    //start frame timer for fps
     beginFrameTimer = chrono::steady_clock::now();
-    
+    //create the tasks with the appropriate attibutes
    pthread_create(&thread[0], NULL, GetFrame, (void*)&task_attr[0]);
     pthread_create(&thread[1], NULL, FindContours, (void*)&task_attr[1]);
     pthread_create(&thread[2], NULL, DrawEnclosingCircle, (void*)&task_attr[2]);
     pthread_create(&thread[3], NULL, DrawTrackedPoints, (void*)&task_attr[3]);
     pthread_create(&thread[4], NULL, DisplayFrame, (void*)&task_attr[4]);
 
+    //main sleeps for 30 seconds
     sleep(30);
+    //main triggers all task loops to finish
     done = 1;
     
     for (int i = 0; i < NUM_THREADS; ++i) 
         pthread_join(thread[i], NULL);
     cap.release();
-    //destroyAllWindows();
     return 0;
 }
