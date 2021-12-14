@@ -106,7 +106,7 @@ struct sched_attr SetupThread(void *data)
 //returns average in nanoseconds
 long long CalcRollingAverage(long long average, long newData, int dataCount)
 {
-    return ((average * dataCount) + (long long)newData) / (long long)dataCount;
+    return ((average * (dataCount-1)) + (long long)newData) / (long long)dataCount;
 }
 void DisplayRuntimeData(char* threadName, long long average, long WCET)
 {
